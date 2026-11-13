@@ -69,6 +69,25 @@ This is the path of the file that will have "seen" listings written to, so we ca
 ### `saved_queries`
 This section contains `{query_friendly_name: query}` JSON objects, for use by `alert_on_new_query_results.py`. `query` should be a query JSON, as described below.
 
+### `query_presets`
+This optional section contains `{preset_name: attributes}` JSON objects - reusable sets of query attributes (eg. a category). A saved query can reference one with a `preset` key, and the preset's attributes are merged into the query. Attributes set on the query itself take precedence over the preset's.
+
+eg.
+```json
+"query_presets": {
+    "mens_clothing": {
+        "selectedCategoryIds": "28",
+        "catIds": "10,28",
+        "categoryId": "28",
+        "categoryLevel": 1,
+        "categoryLevelNo": "2"
+    }
+},
+"saved_queries": {
+    "blundstone_13": {"searchText": "blundstone 13", "preset": "mens_clothing"}
+}
+```
+
 ## Scripts
 ### `bid_sniper.py`
 
@@ -125,6 +144,7 @@ Further improvements to come!
 |`-l`|`--list-queries`|`bool`|If set, list all queries that can be executed by this data source and exit|
 |`-d`|`--data-source`|`str`|Either `local` or `saved_searches`. The former reads query JSONs from the config file's `saved_queries` section. The latter reads from a ShopGoodwill account's "Saved Searches"|
 |N/A|`--markdown`|`bool`|If set, log URLs in markdown format (for gotify)|
+|N/A|`--auto-favorite`|`bool`|If set, add new results to the logged-in account's favorites. Requires `auth_info` (uses `command_account` if `auth_type` is `command_bid`)|
 |N/A|`--config`|`str`|Path to config file - defaults to ./config.json|
 
 #### Query Generation

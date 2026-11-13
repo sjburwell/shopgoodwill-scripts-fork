@@ -207,6 +207,22 @@ def filter_listings(
     return final_listings
 
 
+def get_auth_info(config: Dict) -> Dict:
+    """
+    Returns the auth_info to log in with,
+    using the command account if `auth_type` is `command_bid`
+    """
+
+    auth_info = config.get("auth_info", None)
+    if auth_info is None:
+        raise Exception("SGW authenication required, but no auth_info provided")
+
+    if auth_info.get("auth_type", "universal") == "command_bid":
+        return auth_info["command_account"]
+
+    return auth_info
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -239,6 +255,12 @@ def main():
         help="If set, log URLs in markdown format (for gotify)",
     )
     parser.add_argument(
+        "--auto-favorite",
+        action="store_true",
+        help="If set, add new results to the logged-in account's favorites "
+        "(requires auth_info)",
+    )
+    parser.add_argument(
         "--config",
         type=str,
         default="config.json",
@@ -269,13 +291,7 @@ def main():
 
     # data source setup
     if args.data_source == "saved_searches":
-        auth_info = config.get("auth_info", None)
-        if auth_info is None:
-            raise Exception(
-                "SGW authenication required for `saved_searches` data source"
-            )
-
-        sgw = shopgoodwill.Shopgoodwill(auth_info)
+        sgw = shopgoodwill.Shopgoodwill(get_auth_info(config))
 
         # SGW doesn't let you name your queries,
         # so I guess we'll rely on their IDs
@@ -295,7 +311,10 @@ def main():
         )
 
     else:
-        sgw = shopgoodwill.Shopgoodwill()
+        if args.auto_favorite:
+            sgw = shopgoodwill.Shopgoodwill(get_auth_info(config))
+        else:
+            sgw = shopgoodwill.Shopgoodwill()
         saved_queries = config["saved_queries"]
         list_query_string = "Saved queries: %s" % (", ".join(saved_queries.keys()))
 
@@ -332,9 +351,20 @@ def main():
     # get general and item specific additional filters
     filters = config.get("filters", dict())
 
+    # reusable sets of query attributes, referenced by a query's `preset` key
+    query_presets = config.get("query_presets", dict())
+
     for query_name, query_json in queries_to_run.items():
-        query_json = set_query_defaults(query_json)  # expand query before submitting it
         try:
+            preset_name = query_json.pop("preset", None)
+            if preset_name is not None:
+                if preset_name not in query_presets:
+                    raise Exception(f'Unknown preset "{preset_name}"')
+                # attributes set on the query itself take precedence
+                query_json = {**query_presets[preset_name], **query_json}
+
+            # expand query before submitting it
+            query_json = set_query_defaults(query_json)
             query_res = sgw.get_query_results(query_json)
             total_listings = filter_listings(query_json, query_res, query_name, filters)
 
@@ -356,6 +386,14 @@ def main():
                     listing["endTime"]
                 ).isoformat()
                 alert_queue.append(relevant_attrs)
+
+                if args.auto_favorite:
+                    try:
+                        sgw.add_favorite(int(item_id))
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to favorite item {item_id} - {type(e).__name__} - {e}"
+                        )
 
             if alert_queue:
                 formatted_msg_lines = [
