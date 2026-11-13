@@ -16,11 +16,21 @@
         },
         "loggers": {
             "shopgoodwill_alert_on_new_query_results": {
-                "handlers": ["gotifyHandler"],
+                "handlers": [
+                    "gotifyHandler"
+                ],
                 "level": "INFO"
             },
             "shopgoodwill_bid_sniper": {
-                "handlers": ["gotifyHandler"],
+                "handlers": [
+                    "gotifyHandler"
+                ],
+                "level": "INFO"
+            },
+            "shopgoodwill_archive_closed_favorites": {
+                "handlers": [
+                    "gotifyHandler"
+                ],
                 "level": "INFO"
             }
         }
@@ -82,5 +92,9 @@
             "partNumber": "",
             "catIds": ""
         }
+    },
+    "price_archive": {
+        "archive_filename": "price_archive.csv",
+        "remove_after_days": 5
     }
 }

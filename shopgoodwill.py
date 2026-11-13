@@ -332,6 +332,21 @@ class Shopgoodwill:
         )
 
     @requires_auth
+    def remove_favorite(self, item_id: int) -> None:
+        """
+        Given an Item ID, remove it from the logged in user's favorites.
+
+        :param item_id: A valid item ID
+        :type item_id: int
+        :rtype: None
+        """
+
+        self.shopgoodwill_session.get(
+            f"{Shopgoodwill.API_ROOT}/Favorite/RemoveItemFromFavoriteList",
+            params={"itemId": item_id},
+        )
+
+    @requires_auth
     def place_bid(
         self, item_id: int, bid_amount: float, seller_id: int, quantity: int = 1
     ):

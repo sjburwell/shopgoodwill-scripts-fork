@@ -158,6 +158,32 @@ Once you have a query, you can insert it into the configuration file under `save
 #### Final Notes
 It's worth noting that the logic to derive a query JSON from a ShopGoodwill saved search may not be 100% accurate. Thus, I'd recommend using query JSONs in the config file if possible. If you're interested in knowing why I take this view, check out how saved searches actually generate queries in the web UI. It's not straight-forward. Not to take this time to rant, but the API is _dirty_.
 
+### `archive_closed_favorites.py`
+
+ShopGoodwill limits an account to 150 favorites, and closed auctions count against that limit. This script records every closed favorite's final price (and whether you won it) to a CSV, then removes favorites from ShopGoodwill once their auction has been closed for `remove_after_days`. Commit the CSV somewhere (eg. a private repo, since it includes your notes and max bids) to keep a price history without holding on to closed favorites.
+
+Items are only added to the CSV once, and rows are sorted by end time. Pair this with `alert_on_new_query_results.py --auto-favorite` to record prices for everything your saved queries find.
+
+CSV columns: `item_id`, `end_time` (Pacific), `title`, `final_price`, `num_bids`, `num_bidders`, `won`, `my_max_bid` (from a `bid_sniper` note), `buy_now_price`, `minimum_bid`, `starting_price`, `start_time` (Pacific), `category`, `seller`, `url`, `image_url`, `notes`, `description`, `archived_at` (UTC).
+
+An item's details (description, bidders, etc.) are fetched from its listing page when it's archived. A favorite is never removed until its details have been saved.
+
+#### Arguments
+|Short Name|Long Name|Type|Description|
+|-|-|-|-|
+|N/A|`--remove-after-days`|`float`|Remove favorites this many days after their auction ended. Overrides the config value|
+|N/A|`--archive-file`|`str`|Path to the CSV. Overrides the config value|
+|`-n`|`--dry-run`|`bool`|If set, do not write the CSV or remove any favorites|
+|N/A|`--config`|`str`|Path to config file - defaults to `./config.json`|
+
+#### Configuration
+The following values are under `price_archive` in the example config file.
+
+|Name|Type|Description|
+|-|-|-|
+|`archive_filename`|`str`|Path to the CSV - defaults to `price_archive.csv`|
+|`remove_after_days`|`float`|Days after an auction ends before it is removed from favorites - defaults to `5`|
+
 ### `schedule_bid.py`
 
 This is a simple script to automate favoriting and making a note to have `bid_sniper` bid on a given item before it ends.
