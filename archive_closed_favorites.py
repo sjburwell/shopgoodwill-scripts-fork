@@ -156,8 +156,7 @@ def main():
     )
     args = parser.parse_args()
 
-    with open(args.config, "r") as f:
-        config = json.load(f)
+    config = shopgoodwill.load_config(args.config)
 
     archive_config = config.get("price_archive", dict())
     archive_filename = args.archive_file or archive_config.get(

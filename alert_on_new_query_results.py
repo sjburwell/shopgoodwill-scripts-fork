@@ -268,8 +268,7 @@ def main():
     )
     args = parser.parse_args()
 
-    with open(args.config, "r") as f:
-        config = json.load(f)
+    config = shopgoodwill.load_config(args.config)
 
     # logging setup
     logger = logging.getLogger("shopgoodwill_alert_on_new_query_results")

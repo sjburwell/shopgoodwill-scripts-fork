@@ -60,6 +60,9 @@ If you're interested in why I have quotes around "encryption", check out [my blo
 
 Anyway, to find the "encrypted" variants of these parameters, fire up your browser of choice, open the network monitor, and log in to the service. The `POST` request to `https://buyerapi.shopgoodwill.com/api/SignIn/Login` will contain the values that you're looking for. Those values should be stored in the `encrypted_username` and `encrypted_password` fields.
 
+#### Keeping credentials in a separate file
+If the config file has no `auth_info` section, it's loaded from the file at `auth_info_filename` (default `./auth_info.json`), if that file exists. That file should contain just the contents of `auth_info`. This lets you version-control your config without your credentials.
+
 ### `logging`
 The contents of this section are passed directly to `logging.config`'s `dictConfig` intializer. See [logging's documentation](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig) for what information can be provided here. The example config contains a single gotifyHandler instance for logging alerts from both `bid_sniper` and `alert_on_new_query_results`. 
 

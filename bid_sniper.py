@@ -484,8 +484,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    with open(args.config, "r") as f:
-        config = json.load(f)
+    config = shopgoodwill.load_config(args.config)
 
     bid_sniper = BidSniper(config, args.dry_run)
     bid_sniper.start()

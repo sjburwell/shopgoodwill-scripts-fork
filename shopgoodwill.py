@@ -1,5 +1,7 @@
 import base64
 import datetime
+import json
+import os
 import re
 import urllib.parse
 from copy import deepcopy
@@ -19,6 +21,29 @@ _SHIPPING_COST_PATTERN = re.compile(
     r"Shipping: <span id='shipping-span'>\$(\d+\.\d+) \(.*\)<\/span>"
 )
 _SGW_BUYERAPI_DOMAIN = "buyerapi.shopgoodwill.com"
+
+
+def load_config(config_filename: str) -> Dict:
+    """
+    Load a config file. If it has no `auth_info` section,
+    load one from `auth_info_filename` (default ./auth_info.json) if it exists,
+    so that credentials can be kept out of a version-controlled config
+
+    :param config_filename: Path to the config file
+    :type config_filename: str
+    :return: The parsed config
+    :rtype: Dict
+    """
+
+    with open(config_filename, "r") as f:
+        config = json.load(f)
+
+    auth_info_filename = config.get("auth_info_filename", "auth_info.json")
+    if "auth_info" not in config and os.path.isfile(auth_info_filename):
+        with open(auth_info_filename, "r") as f:
+            config["auth_info"] = json.load(f)
+
+    return config
 
 
 class IgnoreBuyerApiCookieJar(RequestsCookieJar):

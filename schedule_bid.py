@@ -31,8 +31,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    with open(args.config, "r") as f:
-        config = json.load(f)
+    config = shopgoodwill.load_config(args.config)
 
     bid_note_json = {"max_bid": float(args.bid_amount)}
 

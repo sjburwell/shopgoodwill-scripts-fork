@@ -4,3 +4,4 @@ seen_listings.json
 .venv/
 sgw.log
 price_archive.csv
+auth_info.json
