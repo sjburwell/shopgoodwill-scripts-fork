@@ -135,7 +135,7 @@ def filter_listings(
     according to attributes in the query JSON.
 
     At this time, that means to enforce that quotes in the query text
-    appear in the resulting listings' titles
+    appear in the resulting listings' titles, as whole words
 
     :param query_json: A query json for use with sgw.get_query_listings
     :type query_json: Dict
@@ -162,6 +162,12 @@ def filter_listings(
     # There's probably a better way to do this, but I am not privy to it
     search_string = query_json["searchText"].lower()
     quotes = QUOTE_REGEX.findall(search_string)
+
+    # match quoted phrases as whole words,
+    # eg. "muse s" shouldn't match "museum" or "amuse society"
+    quote_patterns = [
+        re.compile(r"(?<!\w)" + re.escape(quote[1:-1]) + r"(?!\w)") for quote in quotes
+    ]
 
     # get time filter
     time_remaining = filters.get(query_name, dict()).get(
@@ -196,8 +202,8 @@ def filter_listings(
                 if item_time_remaining <= filter_time_remaining:
                     failure = True
 
-        for quote in quotes:
-            if quote[1:-1] not in listing["title"].lower():
+        for quote_pattern in quote_patterns:
+            if not quote_pattern.search(listing["title"].lower()):
                 failure = True
                 break
 
