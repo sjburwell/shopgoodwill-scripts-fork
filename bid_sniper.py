@@ -374,8 +374,14 @@ class BidSniper:
         :rtype: None
         """
 
-        self.event_loop.create_task(self.main_loop())
+        # if the main loop ever dies, stop the process rather than idling forever
+        main_task = self.event_loop.create_task(self.main_loop())
+        main_task.add_done_callback(self.task_err_handler)
+        main_task.add_done_callback(lambda _: self.event_loop.stop())
         self.event_loop.run_forever()
+
+        if not main_task.cancelled() and main_task.exception():
+            raise main_task.exception()
 
     async def main_loop(self) -> None:
         refresh_seconds = self.config["bid_sniper"].get("refresh_seconds", 300)
@@ -454,10 +460,18 @@ class BidSniper:
                     self.scheduled_tasks.add(item_id)
 
                 # if configured, set notes for entries that do not have notes
+                #
+                # an exception here must not escape - it would silently end
+                # this loop (eg. SGW 403s AddToFavorite when favorites are full)
                 if self.default_note and not favorite_info.get("notes", ""):
-                    self.shopgoodwill_client.add_favorite(
-                        item_id, note=self.default_note
-                    )
+                    try:
+                        self.shopgoodwill_client.add_favorite(
+                            item_id, note=self.default_note
+                        )
+                    except Exception as e:
+                        self.logger.error(
+                            f"Failed to set default note for item {item_id} - {type(e).__name__} - {e}"
+                        )
 
             await asyncio.sleep(refresh_seconds)
 
